@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-// Este ficheiro controla os butoes de aumentar e diminuir a quantidade de itens no carrinho, assim ivita se de colocar este codigo em todos os ecras
+// Este ficheiro controla os butoes de aumentar e diminuir a quantidade de itens no carrinho, assim ivita de colocar este codigo em todos os ecras
 //Professor, reparei que ia ter de escrever o código dos botões + e - três vezes (no Tamanho, nos Ingredientes e nos Complementos).
 //Para não repetir código e manter os ecrãs limpos, criei esta pequena função auxiliar.
 

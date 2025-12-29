@@ -1,10 +1,13 @@
 package com.example.projetopizza
 
+import com.example.projetopizza.R
+
 sealed class DestinoPizza(
     val route: String,
     val title: String,
     val icon: Int?
 ) {
+    object Login : DestinoPizza("login", "Login", null)
 
     object Utilizadores : DestinoPizza(
         route = "utilizadores",
@@ -13,7 +16,7 @@ sealed class DestinoPizza(
     )
     object Tamanho : DestinoPizza(
         route = "tamanho",
-        title = "tamanho",
+        title = "Pizzas",
         icon = R.drawable.ic_pizza
     )
     object Ingredientes : DestinoPizza(
@@ -23,13 +26,12 @@ sealed class DestinoPizza(
     )
     object Complementos : DestinoPizza(
         route = "complementos",
-        title = "complementos",
+        title = "Bebidas",
         icon = R.drawable.ic_bebidas
     )
     object Resumo : DestinoPizza(
         route = "resumo",
-        title = "resumo",
+        title = "Carrinho",
         icon = R.drawable.ic_carrinho
     )
 }
-

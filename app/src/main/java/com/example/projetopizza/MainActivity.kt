@@ -42,6 +42,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// --- CLASSES DE DADOS ---
+
 enum class TipoItem {
     TAMANHO,
     INGREDIENTE,
@@ -66,26 +68,100 @@ data class ItemCarrinho(
     var quantidade: Int
 )
 
+// --- PROGRAMA PRINCIPAL ---
+
 @Composable
 fun ProgramaPrincipalPizza() {
 
+    // Dados partilhados
     val carrinho: MutableList<ItemCarrinho> = remember { mutableStateListOf() }
     val dadosCliente = remember { mutableStateOf(DadosUtilizador()) }
-
     val navControllerApp = rememberNavController()
 
+    // --- CONFIGURAÇÃO DA BASE DE DADOS ---
+    val context = LocalContext.current
+    val db = remember { PizzaDatabase.getDatabase(context) }
+    val utilizadorDao = db.utilizadorDao()
+    // Lista para o histórico (opcional, caso queiras usar no registo)
+    val listaUtilizadoresSalvos by utilizadorDao.getAllUtilizadores().observeAsState(initial = emptyList())
+
+    // --- NAVHOST PRINCIPAL (SEM BARRA DE NAVEGAÇÃO) ---
     NavHost(navController = navControllerApp, startDestination = "inicio_flow") {
 
+        // 1. Ecrã Início
         composable("inicio_flow") {
             Inicio(
                 onIniciarClick = {
-                    navControllerApp.navigate("main_app_flow") {
-                        popUpTo("inicio_flow") { inclusive = true }
+                    navControllerApp.navigate(DestinoPizza.Login.route)
+                }
+            )
+        }
+
+        // 2. Ecrã Login (Verifica se existe na BD)
+        composable(DestinoPizza.Login.route) {
+            Login(
+                onVoltarClick = {
+                    navControllerApp.navigate("inicio_flow") { popUpTo("inicio_flow") { inclusive = true } }
+                },
+                onVerificarNumero = { telefoneInserido ->
+                    // Procura na BD
+                    val utilizadorEncontrado = utilizadorDao.findByTelefone(telefoneInserido)
+
+                    if (utilizadorEncontrado != null) {
+                        // LOGIN SUCESSO: Carrega dados e entra na App
+                        dadosCliente.value = DadosUtilizador(
+                            nome = utilizadorEncontrado.nome,
+                            telefone = utilizadorEncontrado.telefone,
+                            morada = utilizadorEncontrado.morada
+                        )
+                        navControllerApp.navigate("main_app_flow") {
+                            popUpTo("inicio_flow") { inclusive = true }
+                        }
+                    } else {
+                        // NOVO CLIENTE: Preenche telefone e vai para Registo
+                        dadosCliente.value = DadosUtilizador(telefone = telefoneInserido)
+                        navControllerApp.navigate(DestinoPizza.Utilizadores.route)
                     }
                 }
             )
         }
 
+        // 3. Ecrã Registo (Utilizadores)
+        composable(DestinoPizza.Utilizadores.route) {
+            Utilizadores(
+                dados = dadosCliente,
+                historicoUtilizadores = listaUtilizadoresSalvos,
+
+                onUtilizadorSelecionado = { userBd ->
+                    dadosCliente.value = DadosUtilizador(userBd.nome, userBd.telefone, userBd.morada)
+                },
+                onApagarClick = { userBd ->
+                    utilizadorDao.deleteUtilizador(userBd)
+                },
+
+                onProximoClick = {
+                    // Guarda na BD e entra na App
+                    if (dadosCliente.value.nome.isNotBlank()) {
+                        utilizadorDao.insertUtilizador(
+                            UtilizadorBd(
+                                nome = dadosCliente.value.nome,
+                                telefone = dadosCliente.value.telefone,
+                                morada = dadosCliente.value.morada
+                            )
+                        )
+                    }
+                    navControllerApp.navigate("main_app_flow") {
+                        popUpTo("inicio_flow") { inclusive = true }
+                    }
+                },
+
+                onVoltarClick = {
+                    navControllerApp.navigate(DestinoPizza.Login.route)
+                }
+            )
+        }
+
+        // 4. A APP PRINCIPAL (Aqui é que entra a Barra)
         composable("main_app_flow") {
             AppComNavegacao(navControllerApp, carrinho, dadosCliente)
         }
@@ -100,8 +176,8 @@ fun AppComNavegacao(
 ) {
     val navControllerBarra = rememberNavController()
 
+    // Lista da Barra (Só os ecrãs de pedido)
     val ecransDaBarra = listOf(
-        DestinoPizza.Utilizadores,
         DestinoPizza.Tamanho,
         DestinoPizza.Ingredientes,
         DestinoPizza.Complementos,
@@ -153,68 +229,21 @@ fun AppNavigationPizza(
     carrinho: MutableList<ItemCarrinho>,
     dadosCliente: MutableState<DadosUtilizador>
 ) {
-
-    val context = LocalContext.current
-
-    val db = remember { PizzaDatabase.getDatabase(context) }
-    val utilizadorDao = db.utilizadorDao()
-
-
-    val listaUtilizadoresSalvos by utilizadorDao.getAllUtilizadores().observeAsState(initial = emptyList())
-
     NavHost(
         navController = navController,
-        startDestination = DestinoPizza.Utilizadores.route
+        startDestination = DestinoPizza.Tamanho.route
     ) {
-
-        composable(DestinoPizza.Utilizadores.route) {
-            Utilizadores(
-                dados = dadosCliente,
-
-                historicoUtilizadores = listaUtilizadoresSalvos,
-
-
-                onUtilizadorSelecionado = { userBd ->
-
-                    dadosCliente.value = DadosUtilizador(
-                        nome = userBd.nome,
-                        telefone = userBd.telefone,
-                        morada = userBd.morada
-                    )
-                },
-                onApagarClick = { userBd ->
-                    utilizadorDao.deleteUtilizador(userBd)
-                },
-
-
-                onProximoClick = {
-
-                    if (dadosCliente.value.nome.isNotBlank()) {
-                        utilizadorDao.insertUtilizador(
-                            UtilizadorBd(
-                                nome = dadosCliente.value.nome,
-                                telefone = dadosCliente.value.telefone,
-                                morada = dadosCliente.value.morada
-                            )
-                        )
-                    }
-
-                    navController.navigate(DestinoPizza.Tamanho.route)
-                },
-
-                onVoltarClick = {
-                    navControllerApp.navigate("inicio_flow") {
-                        popUpTo("main_app_flow") { inclusive = true }
-                    }
-                }
-            )
-        }
 
         composable(DestinoPizza.Tamanho.route) {
             Tamanho(
                 carrinho = carrinho,
                 onProximoClick = { navController.navigate(DestinoPizza.Ingredientes.route) },
-                onVoltarClick = { navController.navigate(DestinoPizza.Utilizadores.route) }
+                onVoltarClick = {
+                    // Voltar sai da app (Logout)
+                    navControllerApp.navigate(DestinoPizza.Login.route) {
+                        popUpTo("main_app_flow") { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -241,6 +270,7 @@ fun AppNavigationPizza(
                 onVoltarClick = { navController.navigate(DestinoPizza.Complementos.route) },
                 onConfirmarClick = {
                     carrinho.clear()
+                    // Volta ao início (Logout)
                     navControllerApp.navigate("inicio_flow") {
                         popUpTo("main_app_flow") { inclusive = true }
                     }

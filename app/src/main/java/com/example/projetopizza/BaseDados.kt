@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.Delete
 
 @Entity(tableName = "utilizadores_bd")
 data class UtilizadorBd(
@@ -30,8 +30,10 @@ interface UtilizadorDao {
 
     @Delete
     fun deleteUtilizador(utilizador: UtilizadorBd)
-}
 
+    @Query("SELECT * FROM utilizadores_bd WHERE telefone = :telefone LIMIT 1")
+    fun findByTelefone(telefone: String): UtilizadorBd?
+}
 
 @Database(entities = [UtilizadorBd::class], version = 1)
 abstract class PizzaDatabase : RoomDatabase() {
