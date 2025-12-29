@@ -55,4 +55,4 @@ A aplicação implementa uma verificação lógica simples mas eficaz para a ent
 4.  Execute num Emulador ou Dispositivo Físico Android.
 
 ---
-**Desenvolvido no âmbito da disciplina de Programação Móvel.**
+**Desenvolvido no âmbito da disciplina de Computaçao Móvel.**
