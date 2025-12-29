@@ -1,4 +1,4 @@
-# 🍕 Pizza Ordering App (Android)
+# 🍕 Pizza App (Android)
 
 Uma aplicação nativa Android desenvolvida com **Kotlin** e **Jetpack Compose** para a gestão de encomendas de uma pizzaria. O projeto foca-se numa experiência de utilizador fluida, gestão de estado eficiente e persistência de dados local.
 
